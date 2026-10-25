@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Knowledge gap map</title>
+<style>
+:root{--bg:#f5f7f9;--sf:#fff;--ink:#14202b;--mut:#5c6b78;--ln:#d5dce2;--hub:#3b4a57;--dep:#e08a00;--p1:#cfe3ee;--p10:#1b2a8f;--ac:#1b2a8f}
+@media(prefers-color-scheme:dark){:root{--bg:#0f161c;--sf:#18222b;--ink:#e8eef3;--mut:#93a3b1;--ln:#2c3a46;--hub:#9fb2c2;--dep:#ffb02e;--p1:#2d4a5c;--p10:#8f9bff;--ac:#8f9bff}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 "Avenir Next",Avenir,"Segoe UI",system-ui,sans-serif}
+header{padding:20px 24px 0}h1{margin:0;font:600 24px/1.2 Georgia,"Times New Roman",serif}
+header p{margin:4px 0 14px;color:var(--mut);max-width:70ch}
+.bar{display:flex;gap:8px;flex-wrap:wrap;padding:0 24px 12px;align-items:center}
+button,.chip{font:inherit;border:1px solid var(--ln);background:var(--sf);color:var(--ink);padding:6px 14px;border-radius:999px;cursor:pointer}
+button[aria-pressed=true]{background:var(--ac);color:var(--bg);border-color:var(--ac)}
+button:focus-visible{outline:2px solid var(--dep);outline-offset:2px}
+.sep{width:1px;height:24px;background:var(--ln);margin:0 6px}
+main{display:grid;grid-template-columns:1fr 340px;gap:16px;padding:0 24px 24px}
+@media(max-width:900px){main{grid-template-columns:1fr}}
+.card{background:var(--sf);border:1px solid var(--ln);border-radius:10px}
+#net svg{width:100%;height:620px;display:block}
+.legend{display:flex;gap:16px;flex-wrap:wrap;padding:10px 14px;color:var(--mut);font-size:13px;border-top:1px solid var(--ln)}
+.legend i{display:inline-block;vertical-align:middle;margin-right:5px}
+#side{padding:16px;align-self:start;position:sticky;top:12px}
+#side h2{margin:0 0 6px;font:600 17px/1.3 Georgia,serif}
+.k{color:var(--mut);font-size:12.5px;margin-top:12px}
+.tag{display:inline-block;padding:1px 9px;border-radius:999px;background:var(--bg);border:1px solid var(--ln);font-size:12.5px;margin:2px 4px 2px 0}
+.rel{display:block;width:100%;text-align:left;border-radius:8px;margin:4px 0;padding:6px 10px;font-size:13.5px}
+.rel b{color:var(--dep)}
+#tbl{overflow-x:auto}table{border-collapse:collapse;width:100%;min-width:900px}
+th,td{padding:10px 12px;text-align:left;vertical-align:top;border-bottom:1px solid var(--ln);font-size:13.5px}
+th{cursor:pointer;color:var(--mut);font-weight:600;white-space:nowrap;user-select:none}
+tr.row{cursor:pointer}tr.row:hover,tr.sel{background:var(--bg)}
+.pb{display:inline-block;min-width:30px;text-align:center;padding:2px 8px;border-radius:6px;font-weight:700}
+.node{cursor:pointer}.dim{opacity:.12}text{font-family:inherit}
+.hidden{display:none}
+</style></head><body>
+<header><h1>Knowledge gaps and how they connect</h1>
+<p>Each gap links to the system blocks it touches. Gaps sharing a block pull together, and amber arrows mark gaps that must close before others. Click anything to see its connections.</p></header>
+<div class="bar"><span id="cbtn"></span><span class="sep"></span><span id="vbtn"></span></div>
+<main><section class="card" id="net"><svg id="svg" role="img" aria-label="Network of knowledge gaps and system blocks"></svg>
+<div class="legend"><span><i style="width:14px;height:14px;border-radius:50%;background:var(--p10)"></i>Gap (bigger, darker = higher priority)</span><span><i style="width:11px;height:11px;background:var(--hub);border-radius:2px"></i>System block or sensor</span><span><i style="width:22px;border-top:3px solid var(--dep)"></i>Must close first</span><span><i style="width:22px;border-top:2px dashed var(--dep)"></i>Related</span></div></section>
+<section class="card hidden" id="tbl" style="grid-column:1"></section>
+<aside class="card" id="side"></aside></main>
+<script>
+const G=[
+{id:1,t:"Breathing rate and see-saw accuracy",b:["3.1","9.1","9.2","10.1"],p:10,ppl:"3 people",h:[15,25],w:"2–3 wks",q:"Can chest and belly sensor signals give breathing rate within ±3 breaths/min and detect see-saw breathing at least 83% of the time, despite noise and baby movement?",l:"Depends on 3.1 minimum detectable movement, 3.2 rate detection, 9.1 artifact removal, 9.2 signal preservation, and a defined see-saw criterion. Must close before the overall sensor spec.",how:"Bench experiment and signal-processing validation: paired chest/abdomen signals at known rates with simulated movement artifacts; iterate placement and filtering."},
+{id:2,t:"Population-specific chest size range",b:["1.1"],p:2,ppl:"1 person",h:[.5,.5],w:"A day",q:"Does this population (nutrition, how preterm) need a wider or smaller band size range than general neonates?",l:"Supports gaps on elasticity and closure mechanism.",how:"Conversation with mentor, or literature search (data may be too specific)."},
+{id:3,t:"Band pressure limit",b:["1.1","3.1","4.1","5.1"],p:9,ppl:"2–3 people",h:[5,8],w:"1–2 wks",q:"What band pressure or force starts to restrict safe breathing, and what should the design limit be?",l:"Must close before finalizing band elasticity, tension, closure and the ≤10% expansion-force increase.",how:"Neonatal chest-wall mechanics literature, existing device limits, NICU nurse input; otherwise estimate force and validate on a chest model with a force gauge."},
+{id:4,t:"Neonate positions and torso movement",b:["1.1","3.1","5.1","9.1"],p:7,ppl:"2 people",h:[4,6],w:"1 wk",q:"Which positions are most common, and how far and in which directions does the chest move during repositioning?",l:"Informs adhesive attachment, band flexibility, sensor placement and 5.1 adhesive displacement.",how:"Literature review, NICU nurse conversations, mannequin movement tests, de-identified videos."},
+{id:5,t:"Charging setup for Kenyan units",b:["2.1","19.1"],p:8,ppl:"2 people",h:[4,6],w:"1 wk",q:"Which charging method, connector, adapter and power source would let nurses recharge easily with no specialized equipment?",l:"Informs battery selection, charging circuit, enclosure and workflow. Connects to environmental reliability.",how:"Talk to Kenyan clinical mentors and nurses; survey common adapters and power sources; compare USB-C, wall adapters, removable batteries, central stations."},
+{id:6,t:"Ward temperature and humidity",b:["2.1","3.1","4.1","5.1","19.1"],p:7,ppl:"2 people",h:[4,6],w:"1 wk",q:"What temperature and humidity occur inside Kenyan newborn units, and how much do they vary within a ward and indoors versus outdoors?",l:"Informs environmental test conditions and component selection. Directly linked to the current 2.1 test range.",how:"Weather-data and literature review plus mentor conversations; ideally measured ward data or a safe-range datasheet."},
+{id:7,t:"Smallest detectable breathing movement",b:["3.1","10.1"],p:9,ppl:"2 people",h:[6,10],w:"1–2 wks",q:"What is the smallest clinically meaningful chest movement, and can the conductive rubber sensor detect it above its noise floor?",l:"Must close before finalizing the 0.5%, 1% and 2% strain test conditions in 3.1. Informs rate detection and 10.1 accuracy.",how:"Literature on neonatal chest excursion plus expert input; convert to strain for the planned band geometry; measure the sensor's minimum detectable strain."},
+{id:8,t:"Allergy and biocompatibility limits",b:["1.1","4.1","5.1"],p:8,ppl:"1–2 people",h:[4,6],w:"1 wk",q:"Which materials (e.g. latex) should be avoided, and what biocompatibility rules apply to prolonged neonatal skin contact?",l:"Informs protective layer and adhesive materials; connects to 5.1 skin safety.",how:"Review materials in existing neonatal devices; ask neonatal clinicians about reactions they have seen."},
+{id:9,t:"Fluid and contamination exposure",b:["4.1","5.1"],p:8,ppl:"2 people",h:[5,8],w:"1–2 wks",q:"How much fluid, moisture and contamination reaches the chest, and how often is the adhesive exposed to conditions that weaken it?",l:"Informs adhesive choice, attachment geometry, replacement frequency and replaceability. Connects to ward humidity.",how:"Continue NICU nurse conversations and literature review; list sources (sweat, milk, urine, stool, cleaners); test adhesives under those conditions."},
+{id:10,t:"Data storage and privacy",b:["7.1","8.1"],p:6,ppl:"2 people",h:[4,8],w:"1–2 wks",q:"What data would be stored, how sensitive is it, and can the system store only de-identified respiratory trends?",l:"Informs storage architecture, memory, connectivity and whether to store data at all. Potentially touches 12–15.",how:"Clinical mentor conversation, health-data privacy review, how bedside monitors handle data; find a privacy expert mentor."},
+{id:11,t:"Separating chest and belly motion (WOB)",b:["3.1","9.2","10.1","14.1"],p:10,ppl:"2–3 people",h:[10,16],w:"2 wks",q:"Can the band measure chest and abdomen independently enough to tell normal from paradoxical breathing, or is another sensor needed to detect increased work of breathing?",l:"Depends on sizing (gap 2) and minimum detectable movement (gap 7). Must close before evaluating the WOB part of the accuracy gap and the WOB input to 14.1.",how:"Review chest/abdomen patterns, consult a clinician on WOB signs; mechanical model of normal and opposite-direction motion; compare recorded signals."}];
+// dependencies [from,to]: "from" must close first. rel = related
+const DEP=[[7,1],[7,11],[2,11],[2,3]],REL=[[5,6],[9,6],[8,9],[1,11]];
+const fix={5:["connects to environmental reliability","connects to 2.3 environmental reliability"],6:["current 2.1 test range","current 2.3 test range"],8:["5.1 skin safety","5.2/5.3 skin safety"],9:["replaceability. Connects to ward humidity","5.4 replaceability. Connects to 2.3 humidity"],10:["Potentially touches 12–15","8.2 and potentially 12–15"]};
+const H=G.map(x=>{const o={...x},f=fix[x.id];if(f)o.l=o.l.replace(f[0],f[1]);return o});
+const N=[
+{id:1,t:"Prescribed oxygen flow rates",b:["1.1","2.1"],p:9,ppl:"1–2 people",h:[2,3],w:"2 days",q:"What oxygen flow rates are typically prescribed for the neonates who would use this device, and what range should the system handle?",l:"Must close before finalizing flow-rate testing conditions. Informs 2.1.",how:"Literature review and a conversation with a neonatal respiratory therapist or clinician; check care protocols for typical and maximum flow with the intended cannula."},
+{id:2,t:"Prescribed vs delivered flow",b:["1.1","2.1"],p:7,ppl:"1 person",h:[3,5],w:"1 wk",q:"How far can actual delivered flow differ from the prescribed flow on common oxygen sources in the target setting (cannulas are often reused against recommendations)?",l:"Informs the acceptable tolerance for 1.1. Informs 2.1.",how:"Review specs of common oxygen sources and regulators, ask a clinical mentor; if equipment is available, measure several sources at the same setting."},
+{id:3,t:"Cannula and tubing connector differences",b:["2.1","5.1"],p:8,ppl:"2 people",h:[4,6],w:"1 wk",q:"Do common neonatal cannula and tubing connectors differ in ways that affect whether the device attaches reliably?",l:"Must close before finalizing dimensions and compatibility testing in 2.1. Informs 5.1 clip/attachment design and testing.",how:"Identify common cannula and tubing sizes from device specs and clinician interviews."},
+{id:4,t:"Breath temperature signal",b:["6.1"],p:10,ppl:"2 people",h:[6,10],w:"1–2 wks",q:"How large and how timed is the temperature change at the cannula during inhalation and exhalation, and can it separate individual breaths?",l:"Must close before setting temperature sensor sensitivity, sampling rate, nasal location and RR accuracy.",how:"Literature review and talks with neonatal respiratory experts, then bench tests with simulated neonatal breathing at different rates and flows."},
+{id:5,t:"Breath pressure signal",b:["7.1","12.1","6.1 + 7.1"],p:10,ppl:"2 people",h:[6,10],w:"1–2 wks",q:"How large is the pressure change in or around the cannula during normal breathing, and can it tell inhalation from exhalation?",l:"Informs pressure sensor range, sensitivity and sampling requirements, 12.1 sampling rate, the final RR algorithm, and 6.1 + 7.1 sensor-combination testing.",how:"Literature and spec review plus expert conversation, then bench tests with simulated airflow through a cannula at representative rates."},
+{id:6,t:"Secretions and pH signal",b:["8.1","9.1","7.1","12.1","6.1 + 7.1"],p:7,ppl:"2 people",h:[5,8],w:"1–2 wks",q:"How often and how much secretion reaches the cannula, and is the pH signal consistent enough to separate secretion events from normal breathing measurements?",l:"Informs whether pH sensing is useful at all, its placement, and the need for a replaceable sensing element. Also listed as informing 7.1 pressure range, 12.1 sampling rate, the RR algorithm and 6.1 + 7.1 combination testing.",how:"Conversations with NICU nurses and a literature review on neonatal nasal secretions."},
+{id:7,t:"Does combining signals help?",b:["6.1 + 7.1","8.1","9.1"],p:9,ppl:"2–3 people",h:[10,15],w:"2 wks",q:"Does combining temperature and pressure improve respiratory-rate estimates over either alone, especially when one signal is noisy or weak?",l:"Depends on the expected signal size for both sensors; directly informs the final RR algorithm. Informs 8.1 membrane transfer requirement, 9.1 pH-dye response requirement, and whether to pursue the pH concept.",how:"Collect synchronized signals during simulated breathing at known rates; compare RR accuracy for temperature, pressure and combined, especially at the edges of the normal range."},
+{id:8,t:"Cannula position, fit and movement",b:["6.1 + 7.1","5.1","16.1"],p:9,ppl:"2 people",h:[8,12],w:"1–2 wks",q:"How much do cannula position, fit and movement change the temperature and pressure signals used for respiratory rate?",l:"Links to sensor placement, adhesive/attachment design, noise extraction and RR accuracy. Depends on 6.1 thermistor and 7.1 pressure signal magnitude; informs 16.1 noise-extraction requirements and the RR algorithm.",how:"Test different positions, angles, distances from the nares and simulated infant movement; quantify changes in amplitude and RR accuracy."},
+{id:9,t:"Full system rate accuracy (±3 breaths/min)",b:["6.1 + 7.1","5.1","16.1"],p:10,ppl:"3 people",h:[15,25],w:"2–3 wks",q:"Can the temperature and pressure signals estimate neonatal respiratory rate within ±3 breaths/min across the expected range, with realistic movement and noise?",l:"Depends on the individual temperature and pressure gaps, sensor placement, sampling rate and noise filtering, and on 5.1 clip/attachment stability. Informs 16.1 noise-extraction requirements and final sensor-placement design.",how:"Bench validation with a breathing simulator (do we have one?) at known rates and controlled airflow/temperature, then add movement and noise and compare with the reference rate."}];
+const C={
+"Chest band":{g:H,dep:DEP,rel:REL},
+"Nasal cannula":{g:N,dep:[[1,4],[1,5],[4,7],[5,7],[4,8],[5,8],[4,9],[5,9],[7,9],[8,9],[7,6]],rel:[[1,2],[3,8],[6,8],[7,8]]}};
+let cur="Chest band",view="map",sel=null,sort=["p",-1],raf;
+const $=s=>document.querySelector(s),NS="http://www.w3.org/2000/svg";
+const col=p=>`color-mix(in srgb,var(--p10) ${(p/10)*100}%,var(--p1))`;
+const el=(n,a,par)=>{const e=document.createElementNS(NS,n);for(const k in a)e.setAttribute(k,a[k]);par&&par.appendChild(e);return e};
+function btns(box,items,get,set){const c=$(box);c.innerHTML="";items.forEach(([k,l])=>{const b=document.createElement("button");b.textContent=l;b.setAttribute("aria-pressed",get()==k);b.onclick=()=>{set(k);render()};c.appendChild(b);c.append(" ")})}
+const shared=(a,b)=>a.b.filter(x=>b.b.includes(x));
+function render(){
+ btns("#cbtn",Object.keys(C).map(k=>[k,k]),()=>cur,k=>{cur=k;sel=null});
+ btns("#vbtn",[["map","Connection map"],["list","Ranked list"]],()=>view,k=>view=k);
+ $("#net").classList.toggle("hidden",view!="map");$("#tbl").classList.toggle("hidden",view!="list");
+ if(view=="map")map();else table();side();}
+function map(){
+ cancelAnimationFrame(raf);const D=C[cur],svg=$("#svg");svg.innerHTML="";
+ const W=svg.clientWidth||900,H=620;svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
+ const blocks=[...new Set(D.g.flatMap(g=>g.b))].sort((a,b)=>(parseFloat(a)||99)-(parseFloat(b)||99)||a.localeCompare(b));
+ const N=[],M={};
+ D.g.forEach((g,i)=>{const a=i/D.g.length*6.283;const n={k:"g",id:g.id,g,r:12+g.p*1.9,x:W/2+Math.cos(a)*W/3.2,y:H/2+Math.sin(a)*H/3,vx:0,vy:0};N.push(n);M["g"+g.id]=n});
+ blocks.forEach((b,i)=>{const n={k:"b",id:b,r:15,x:W/2+(Math.random()-.5)*200,y:H/2+(Math.random()-.5)*200,vx:0,vy:0};N.push(n);M["b"+b]=n});
+ const E=[];D.g.forEach(g=>g.b.forEach(b=>E.push({a:M["g"+g.id],b:M["b"+b],t:"m"})));
+ D.dep.forEach(([a,b])=>E.push({a:M["g"+a],b:M["g"+b],t:"d"}));D.rel.forEach(([a,b])=>E.push({a:M["g"+a],b:M["g"+b],t:"r"}));
+ el("defs",{},svg).innerHTML='<marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--dep)"/></marker>';
+ const gl=el("g",{},svg),gn=el("g",{},svg);
+ E.forEach(e=>e.el=el("line",e.t=="m"?{stroke:"var(--ln)","stroke-width":1.5}:e.t=="d"?{stroke:"var(--dep)","stroke-width":3,"marker-end":"url(#ar)"}:{stroke:"var(--dep)","stroke-width":2,"stroke-dasharray":"5 4"},gl));
+ N.forEach(n=>{const g=el("g",{class:"node",tabindex:0},gn);n.el=g;
+  if(n.k=="g"){el("circle",{r:n.r,fill:col(n.g.p),stroke:"var(--ink)","stroke-opacity":.25},g);
+   el("text",{"text-anchor":"middle",dy:".35em",fill:n.g.p>5?"#fff":"var(--ink)","font-weight":700,"font-size":13},g).textContent=n.id;
+   const t=el("text",{y:n.r+14,"text-anchor":"middle","font-size":12,fill:"var(--ink)"},g);t.textContent=n.g.t.length>26?n.g.t.slice(0,25)+"…":n.g.t;}
+  else{const w=Math.max(34,n.id.length*7+14);n.w=w;el("rect",{x:-w/2,y:-11,width:w,height:22,rx:4,fill:"var(--hub)"},g);el("text",{"text-anchor":"middle",dy:".35em",fill:"var(--bg)","font-size":12,"font-weight":600},g).textContent=n.id}
+  const pick=()=>{sel=n.k+n.id;side();hl()};g.onclick=pick;g.onkeydown=e=>e.key=="Enter"&&pick();
+  g.onmouseenter=()=>hl(n.k+n.id);g.onmouseleave=()=>hl();});
+ svg.onclick=e=>{if(e.target==svg){sel=null;side();hl()}};
+ let it=0;const step=()=>{const al=Math.max(.02,1-it/260);it++;
+  for(const a of N)for(const b of N){if(a==b)continue;let dx=a.x-b.x,dy=a.y-b.y,d=Math.hypot(dx,dy)||1,m=a.r+b.r+34+(a.k=="b"?a.id.length*2:0);if(d<m*2){const f=(m*2-d)/d*.02*al;a.vx+=dx*f;a.vy+=dy*f}}
+  E.forEach(e=>{let dx=e.b.x-e.a.x,dy=e.b.y-e.a.y,d=Math.hypot(dx,dy)||1,L=e.t=="m"?95:e.t=="d"?170:210,f=(d-L)/d*(e.t=="m"?.05:.01)*al;e.a.vx+=dx*f;e.a.vy+=dy*f;e.b.vx-=dx*f;e.b.vy-=dy*f});
+  N.forEach(n=>{n.vx+=(W/2-n.x)*.004*al;n.vy+=(H/2-n.y)*.004*al;n.vx*=.8;n.vy*=.8;n.x=Math.max(n.r+20,Math.min(W-n.r-20,n.x+n.vx));n.y=Math.max(n.r+10,Math.min(H-n.r-24,n.y+n.vy));n.el.setAttribute("transform",`translate(${n.x},${n.y})`)});
+  E.forEach(e=>{let dx=e.b.x-e.a.x,dy=e.b.y-e.a.y,d=Math.hypot(dx,dy)||1,s=e.a.r*(e.a.k=="g"?1:.8),t=e.b.r*(e.b.k=="g"?1:.8)+(e.t=="d"?4:0);
+   e.el.setAttribute("x1",e.a.x+dx/d*s);e.el.setAttribute("y1",e.a.y+dy/d*s);e.el.setAttribute("x2",e.b.x-dx/d*t);e.el.setAttribute("y2",e.b.y-dy/d*t)});
+  if(it<400)raf=requestAnimationFrame(step)};step();
+ window._N=N;window._E=E;hl();}
+function hl(h){const k=h||sel;if(!window._N)return;const N=window._N,E=window._E;
+ if(!k){N.forEach(n=>n.el.classList.remove("dim"));E.forEach(e=>e.el.classList.remove("dim"));return}
+ const on=new Set([k]);E.forEach(e=>{const a=e.a.k+e.a.id,b=e.b.k+e.b.id;if(a==k)on.add(b);if(b==k)on.add(a)});
+ // selecting a block also lights up gaps' other blocks? keep to direct neighbours
+ N.forEach(n=>n.el.classList.toggle("dim",!on.has(n.k+n.id)));
+ E.forEach(e=>e.el.classList.toggle("dim",!(on.has(e.a.k+e.a.id)&&on.has(e.b.k+e.b.id)&&(e.a.k+e.a.id==k||e.b.k+e.b.id==k))));}
+function pri(p){return `<span class="pb" style="background:${col(p)};color:${p>5?"#fff":"var(--ink)"}">${p}</span>`}
+function table(){const D=C[cur];const [f,d]=sort;
+ const v=g=>f=="h"?(g.h[0]+g.h[1])/2:f=="t"?g.t:g[f];
+ const rows=[...D.g].sort((a,b)=>{const x=v(a),y=v(b);return (x>y?1:x<y?-1:0)*d||b.p-a.p});
+ const th=(k,l)=>`<th data-s="${k}">${l}${f==k?(d<0?" ▼":" ▲"):""}</th>`;
+ $("#tbl").innerHTML=`<table><thead><tr>${th("p","Priority")}${th("t","Gap")}${th("b","System blocks")}${th("h","Effort")}<th>Linked gaps</th><th>How to close it</th></tr></thead><tbody>`+rows.map(g=>{
+  const links=nbrs(g,D).map(n=>`G${n.g.id}`).join(", ");
+  return `<tr class="row ${sel=="g"+g.id?"sel":""}" data-i="${g.id}"><td>${pri(g.p)}</td><td><b>G${g.id}. ${g.t}</b><br><span style="color:var(--mut)">${g.q}</span></td><td>${g.b.map(b=>`<span class="tag">${b}</span>`).join("")}</td><td>${g.ppl}<br>~${g.h[0]==g.h[1]?g.h[0]:g.h[0]+"–"+g.h[1]} person-hrs<br>${g.w}</td><td>${links}</td><td>${g.how}</td></tr>`}).join("")+"</tbody></table>";
+ document.querySelectorAll("th[data-s]").forEach(t=>t.onclick=()=>{const k=t.dataset.s;sort=[k,sort[0]==k?-sort[1]:(k=="p"?-1:1)];table()});
+ document.querySelectorAll("tr.row").forEach(r=>r.onclick=()=>{sel="g"+r.dataset.i;table();side()});}
+function nbrs(g,D){const o=[];D.g.forEach(x=>{if(x==g)return;const s=shared(g,x);const dep=D.dep.find(e=>(e[0]==g.id&&e[1]==x.id)||(e[1]==g.id&&e[0]==x.id));const rel=D.rel.find(e=>(e[0]==g.id&&e[1]==x.id)||(e[1]==g.id&&e[0]==x.id));
+ if(s.length||dep||rel)o.push({g:x,s,dep:dep?(dep[0]==g.id?"out":"in"):null,rel:!!rel})});
+ return o.sort((a,b)=>(b.s.length+(b.dep?3:0))-(a.s.length+(a.dep?3:0)))}
+function side(){const D=C[cur],s=$("#side");
+ if(!sel){const tot=D.g.reduce((a,g)=>a+(g.h[0]+g.h[1])/2,0);
+  const hub={};D.g.forEach(g=>g.b.forEach(b=>hub[b]=(hub[b]||0)+1));const top=Object.entries(hub).sort((a,b)=>b[1]-a[1]).slice(0,3);
+  s.innerHTML=`<h2>${cur}</h2><p style="color:var(--mut);margin:0">${D.g.length} gaps, about ${Math.round(tot)} person-hours in total.</p><div class="k">Most-shared system blocks</div><p style="margin:4px 0">${top.map(([b,n])=>`<span class="tag">${b}: ${n} gaps</span>`).join("")}</p><div class="k">Highest priority</div><p style="margin:4px 0">${D.g.filter(g=>g.p>=9).sort((a,b)=>b.p-a.p).map(g=>`<button class="rel" data-g="${g.id}">${pri(g.p)} G${g.id}. ${g.t}</button>`).join("")}</p><p class="k">Pick a gap or block in the map to trace its links.</p>`;
+  s.querySelectorAll("[data-g]").forEach(b=>b.onclick=()=>{sel="g"+b.dataset.g;render()});return}
+ if(sel[0]=="b"){const b=sel.slice(1),gs=D.g.filter(g=>g.b.includes(b));
+  s.innerHTML=`<h2>System block ${b}</h2><p style="color:var(--mut);margin:0">${gs.length} gaps depend on this block.</p>`+gs.map(g=>`<button class="rel" data-g="${g.id}">${pri(g.p)} G${g.id}. ${g.t}</button>`).join("");}
+ else{const g=D.g.find(x=>"g"+x.id==sel);
+  s.innerHTML=`<h2>G${g.id}. ${g.t}</h2><div>${pri(g.p)} priority &nbsp; ${g.ppl}, ~${g.h[0]==g.h[1]?g.h[0]:g.h[0]+"–"+g.h[1]} person-hrs, ${g.w}</div>
+  <div class="k">Question</div><div>${g.q}</div><div class="k">System blocks</div><div>${g.b.map(b=>`<span class="tag">${b}</span>`).join("")}</div>
+  <div class="k">Dependencies</div><div>${g.l}</div><div class="k">How to close it</div><div>${g.how}</div>
+  <div class="k">Connected gaps</div>`+(nbrs(g,D).map(n=>`<button class="rel" data-g="${n.g.id}">${n.dep=="in"?"<b>Close first →</b> ":n.dep=="out"?"<b>Unblocks →</b> ":n.rel?"<b>Related</b> · ":""}G${n.g.id}. ${n.g.t}<br><span style="color:var(--mut)">${n.s.length?"shares "+n.s.join(", "):""}</span></button>`).join("")||"None");}
+ s.querySelectorAll("[data-g]").forEach(b=>b.onclick=()=>{sel="g"+b.dataset.g;if(view=="map"){side();hl()}else render()});}
+addEventListener("resize",()=>view=="map"&&map());render();
+</script></body></html>
